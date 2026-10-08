@@ -156,8 +156,15 @@ void HysteresisProcessor::prepareToPlay (double sampleRate, int samplesPerBlock,
     for (auto& val : sat)
         val.reset (numSteps);
 
-    hProcs.resize ((size_t) numChannels);
-    for (size_t ch = 0; ch < (size_t) numChannels; ++ch)
+#if HYSTERESIS_USE_SIMD
+    // each processor handles one SIMD vector of channels, so a stereo
+    // stream needs only one (and only one set of STN models in memory)
+    const auto numHysteresisProcs = chowdsp::Math::ceiling_divide ((size_t) numChannels, Vec2::size);
+#else
+    const auto numHysteresisProcs = (size_t) numChannels;
+#endif
+    hProcs.resize (numHysteresisProcs);
+    for (size_t ch = 0; ch < numHysteresisProcs; ++ch)
     {
         hProcs[ch].setSampleRate (sampleRate * osManager.getOSFactor());
         hProcs[ch].cook (drive[ch].getCurrentValue(), width[ch].getCurrentValue(), sat[ch].getCurrentValue(), wasV1);
