@@ -9,6 +9,10 @@ else()
     option(CHOWTAPE_BUILD_CLAP "Create a CLAP target for ChowTape" ON)
 endif()
 
+# Off by default: when on, every plugin instance queries GitHub on construction,
+# even without an editor open (e.g. offline renders, headless hosts).
+option(CHOWTAPE_AUTO_UPDATE "Check GitHub for new releases when the plugin loads" OFF)
+
 if (CHOWTAPE_BUILD_CLAP AND (CMAKE_VERSION VERSION_LESS 3.21.0))
     message(WARNING "CLAP builds require CMake version 3.21 or higher! To disable CLAP builds, run CMake configuration with \"-DCHOWTAPE_BUILD_CLAP=OFF\"")
 endif()
@@ -91,7 +95,7 @@ target_compile_definitions(CHOWTapeModel
         JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_JACK=1
         JUCE_ALSA=1
-        CHOWDSP_AUTO_UPDATE=1
+        CHOWDSP_AUTO_UPDATE=$<BOOL:${CHOWTAPE_AUTO_UPDATE}>
         CHOWDSP_GIT_BRANCH="${GIT_BRANCH}"
         CHOWDSP_GIT_COMMIT_HASH="${GIT_COMMIT_HASH}"
         CHOWDSP_BUILD_FQDN="${PLUGIN_BUILD_FQDN}"
