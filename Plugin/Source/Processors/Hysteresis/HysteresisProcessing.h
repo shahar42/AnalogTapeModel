@@ -133,12 +133,14 @@ private:
     inline Float STNSolver (Float H, Float H_d) noexcept
     {
 #if HYSTERESIS_USE_SIMD
-        double H_arr alignas (xsimd::default_arch::alignment())[2];
-        double H_d_arr alignas (xsimd::default_arch::alignment())[2];
-        double H_n1_arr alignas (xsimd::default_arch::alignment())[2];
-        double H_d_n1_arr alignas (xsimd::default_arch::alignment())[2];
-        double M_n1_arr alignas (xsimd::default_arch::alignment())[2];
-        double M_out alignas (xsimd::default_arch::alignment())[2];
+        // one lane per channel, sized to the SIMD register width (2 for SSE/NEON, 4 for AVX)
+        constexpr auto numLanes = Float::size;
+        double H_arr alignas (Float::arch_type::alignment())[numLanes];
+        double H_d_arr alignas (Float::arch_type::alignment())[numLanes];
+        double H_n1_arr alignas (Float::arch_type::alignment())[numLanes];
+        double H_d_n1_arr alignas (Float::arch_type::alignment())[numLanes];
+        double M_n1_arr alignas (Float::arch_type::alignment())[numLanes];
+        double M_out alignas (Float::arch_type::alignment())[numLanes];
 
         H.store_aligned ((double*) H_arr);
         H_d.store_aligned ((double*) H_d_arr);
@@ -146,7 +148,7 @@ private:
         H_d_n1.store_aligned ((double*) H_d_n1_arr);
         M_n1.store_aligned ((double*) M_n1_arr);
 
-        for (int ch = 0; ch < 2; ++ch)
+        for (size_t ch = 0; ch < numLanes; ++ch)
         {
             double input alignas (xsimd::default_arch::alignment())[5] = { H_arr[ch], H_d_arr[ch], H_n1_arr[ch], H_d_n1_arr[ch], M_n1_arr[ch] };
 
